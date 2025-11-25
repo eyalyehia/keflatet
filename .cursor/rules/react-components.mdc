@@ -1,0 +1,48 @@
+# כללי קומפוננטות React
+
+## מבנה קומפוננטה
+```tsx
+"use client"
+
+import { motion } from "framer-motion"
+import { IconName } from "lucide-react"
+import { useRef } from "react"
+
+export default function ComponentName() {
+  const ref = useRef(null)
+  
+  return (
+    <motion.section
+      ref={ref}
+      className="py-16 px-4 bg-gradient-to-br from-[#9dd0bf] via-white to-[#e2cdbd]"
+      dir="rtl"
+    >
+      {/* תוכן הקומפוננטה */}
+    </motion.section>
+  )
+}
+```
+
+## רספונסיביות
+- השתמש ב-Tailwind responsive classes: `text-2xl sm:text-3xl md:text-4xl lg:text-5xl`
+- גריד רספונסיבי: `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
+- מרווחים רספונסיביים: `gap-4 sm:gap-6 lg:gap-8`
+
+## אנימציות
+- השתמש ב-Framer Motion לכל האנימציות
+- הוסף `useInView` לטריגר אנימציות בגלילה
+- השתמש ב-`motion.div` עם variants לאנימציות מורכבות
+
+## צבעים
+- כתום: `#f5a383`
+- ירוק: `#9dd0bf` 
+- בז': `#e2cdbd`
+- רקע: `#fdf6ed`
+
+## אייקונים
+- השתמש ב-Lucide React: `import { IconName } from "lucide-react"`
+- גודל רספונסיבי: `w-6 h-6 sm:w-8 sm:h-8`
+description:
+globs:
+alwaysApply: false
+---

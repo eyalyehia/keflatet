@@ -1,0 +1,40 @@
+# כללי Imports ותלויות
+
+## Import Paths
+- עבור קומפוננטות UI: `import { Component } from "../components/ui/component"`
+- עבור קומפוננטות מ-pages: `import Component from "./component"`
+- עבור hooks: `import { useHook } from "../hooks/useHook"`
+- עבור contexts: `import { Context } from "../contexts/Context"`
+
+## תלויות נפוצות
+```tsx
+// Framer Motion
+import { motion, useScroll, useTransform, useInView } from "framer-motion"
+
+// Lucide React Icons
+import { Users, HandHeart, Building2, Heart, Calendar, Gift } from "lucide-react"
+
+// React Hooks
+import { useRef, useState, useEffect } from "react"
+
+// UI Components
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card"
+import { Button } from "../components/ui/button"
+import { Input } from "../components/ui/input"
+```
+
+## פתרון שגיאות Import
+- אם יש שגיאת `@/components/ui/card`, שנה ל-`../components/ui/card`
+- וודא שהקובץ קיים בנתיב הנכון
+- בדוק שהקומפוננטה מיוצאת נכון מה-export
+
+## תלויות מותקנות
+- `framer-motion` - אנימציות
+- `lucide-react` - אייקונים
+- `@radix-ui/react-*` - קומפוננטות UI
+- `tailwindcss` - עיצוב
+- `next` - React framework
+description:
+globs:
+alwaysApply: false
+---

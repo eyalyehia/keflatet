@@ -1,0 +1,51 @@
+# תמיכה בעברית ו-RTL
+
+## הגדרות בסיסיות
+```tsx
+// תמיד הוסף dir="rtl" לאלמנטים הראשיים
+<motion.section
+  className="..."
+  dir="rtl"
+>
+```
+
+## טקסט בעברית
+- השתמש בגופנים מותאמים: `font-staff`
+- כותרות: `text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800`
+- טקסט רגיל: `text-gray-600 leading-relaxed text-sm sm:text-base lg:text-lg`
+
+## יישור טקסט
+- כותרות מרכזיות: `text-center`
+- טקסט רגיל: `text-right` (ברירת מחדל ב-RTL)
+- כרטיסים: `text-center` בתוך הכרטיס
+
+## מרווחים ופדינג
+- מרווחים רספונסיביים: `py-16 px-4`
+- מרווחים בין אלמנטים: `mb-12`, `gap-4 sm:gap-6`
+- פדינג בתוך כרטיסים: `p-4 sm:p-6 lg:p-8`
+
+## צבעים לטקסט
+- כותרות: `text-gray-800`
+- טקסט רגיל: `text-gray-600`
+- הדגשות: `text-[#f5a383]` (כתום)
+- קישורים: `text-[#9dd0bf]` (ירוק)
+
+## אנימציות לטקסט
+```tsx
+<motion.h2
+  className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-800 mb-4"
+  initial={{ opacity: 0, scale: 0.5 }}
+  animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.5 }}
+  transition={{
+    type: "spring",
+    stiffness: 100,
+    delay: 0.3,
+  }}
+>
+  ייעוד העמותה
+</motion.h2>
+```
+description:
+globs:
+alwaysApply: false
+---

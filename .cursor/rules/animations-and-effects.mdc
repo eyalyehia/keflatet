@@ -1,0 +1,117 @@
+# אנימציות ואפקטים עם Framer Motion
+
+## Setup בסיסי
+```tsx
+import { motion, useScroll, useTransform, useInView } from "framer-motion"
+import { useRef } from "react"
+
+export default function Component() {
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true, margin: "-100px" })
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  })
+  
+  const yTransform = useTransform(scrollYProgress, [0, 1], [100, -100])
+  const opacityTransform = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0])
+}
+```
+
+## Variants לאנימציות מורכבות
+```tsx
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+      delayChildren: 0.2,
+    },
+  },
+}
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 60,
+    rotateX: -15,
+    scale: 0.9,
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    rotateX: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12,
+      duration: 0.8,
+    },
+  },
+}
+```
+
+## אנימציות אינטראקטיביות
+```tsx
+<motion.div
+  whileHover={{
+    y: -10,
+    rotateY: 5,
+    scale: 1.02,
+    transition: { type: "spring", stiffness: 300 },
+  }}
+  whileTap={{ scale: 0.98 }}
+>
+  {/* תוכן */}
+</motion.div>
+```
+
+## אנימציות מתמשכות
+```tsx
+<motion.div
+  animate={{
+    y: [0, -15, 0],
+    rotate: [0, 10, -10, 0],
+    scale: [1, 1.1, 1],
+  }}
+  transition={{
+    duration: 5,
+    repeat: Number.POSITIVE_INFINITY,
+    ease: "easeInOut",
+  }}
+>
+  {/* תוכן */}
+</motion.div>
+```
+
+## אפקטי גרדיאנט
+```tsx
+// רקע גרדיאנט
+className="bg-gradient-to-br from-[#9dd0bf] via-white to-[#e2cdbd]"
+
+// אייקון עם גרדיאנט
+className="bg-gradient-to-r from-[#f5a383] to-[#9dd0bf]"
+
+// כרטיס עם אפקט שקיפות
+className="bg-white/90 backdrop-blur-sm"
+```
+
+## אפקטי צל
+```tsx
+// צל בסיסי
+className="shadow-lg"
+
+// צל עם hover
+className="shadow-lg hover:shadow-2xl transition-all duration-500"
+
+// צל מותאם אישית
+whileHover={{
+  boxShadow: "0 20px 40px rgba(157, 208, 191, 0.4)",
+}}
+```
+description:
+globs:
+alwaysApply: false
+---

@@ -1,0 +1,31 @@
+# MovingBorder Integration Guide
+
+## Overview
+The MovingBorder component has been integrated into the organization purpose section to add dynamic border animations to the purpose cards, using the exact design pattern from the provided code.
+
+## Files Modified
+- [app/components/ui/MovingBorder.tsx](mdc:app/components/ui/MovingBorder.tsx) - Updated component with improved TypeScript types and design
+- [app/pages/organization-purpose.tsx](mdc:app/pages/organization-purpose.tsx) - Updated to use Button component with MovingBorder effect
+- [app/lib/utils.ts](mdc:app/lib/utils.ts) - Contains the `cn` utility function for class merging
+
+## Implementation Details
+- Each purpose card now uses the Button component with MovingBorder wrapper
+- The border moves around the card perimeter with random durations (10-20 seconds)
+- Cards have a white background (#ffffff) with text in orange color (#f5a383)
+- MovingBorder effect uses orange color (#f5a383) with consistent sizing
+- Responsive design: cards stack vertically on mobile, side-by-side on larger screens
+- Improved TypeScript types with ElementType and unknown instead of any
+
+## Key Features
+- Dynamic border animation with customizable duration
+- Dark theme with gradient backgrounds
+- Responsive design with proper grid layout
+- Improved accessibility and type safety
+
+## Dependencies
+- framer-motion - For animation functionality
+- clsx - For conditional class names
+- tailwind-merge - For merging Tailwind classes
+
+## Usage
+The Button component with MovingBorder can be reused throughout the application by importing it and customizing the styling and content.

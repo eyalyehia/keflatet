@@ -1,0 +1,29 @@
+# Fun to Give - Next.js Project Structure
+
+This is a Next.js 13+ project using the app directory structure. The main entry point is [app/page.tsx](mdc:app/page.tsx) which serves as the homepage.
+
+## Key Directories:
+- **app/**: Main application directory (Next.js 13+ app router)
+  - **components/**: Reusable UI components
+    - **ui/**: Basic UI components like buttons, cards, inputs
+    - **cursor/**: Custom cursor components
+    - **scroll/**: Scroll-related animations
+    - **loadpage/**: Loading page components
+  - **pages/**: Page components (not routes, but content sections)
+  - **contexts/**: React contexts for state management
+  - **hooks/**: Custom React hooks
+  - **lib/**: Utility functions and configurations
+  - **fonts/**: Custom font definitions
+  - **styles/**: Additional CSS files
+
+## Component Guidelines:
+- Use TypeScript for all components
+- Follow the "use client" directive for client-side components
+- Use Framer Motion for animations
+- Implement RTL (right-to-left) support for Hebrew text
+- Use Tailwind CSS for styling with custom color palette
+
+## Color Palette:
+- Primary: #97cabc (mint green)
+- Secondary: #f2a283 (coral)
+- Background: #fdf6ed (cream)

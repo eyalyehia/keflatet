@@ -1,0 +1,12 @@
+@font-face {
+  font-family: 'Almoni-DL-AAA-700';
+  src: url('https://fonts.gstatic.com/s/almoni/v1/7Au_p_0qiz-adZnkOCX2yWNC.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.almoni-bold {
+  font-family: 'Almoni-DL-AAA-700', sans-serif;
+  font-weight: 700;
+} 

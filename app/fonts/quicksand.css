@@ -1,0 +1,68 @@
+@font-face {
+  font-family: 'Quicksand';
+  src: url('https://fonts.gstatic.com/s/quicksand/v31/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkP8o58a-xw.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('https://fonts.gstatic.com/s/quicksand/v31/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkP8o58a-xw.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('https://fonts.gstatic.com/s/quicksand/v31/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkP8o58a-xw.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('https://fonts.gstatic.com/s/quicksand/v31/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkP8o58a-xw.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Quicksand';
+  src: url('https://fonts.gstatic.com/s/quicksand/v31/6xK-dSZaM9iE8KbpRA_LJ3z8mH9BOJvgkP8o58a-xw.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.quicksand {
+  font-family: 'Quicksand', sans-serif;
+}
+
+.quicksand-light {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 300;
+}
+
+.quicksand-regular {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 400;
+}
+
+.quicksand-medium {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 500;
+}
+
+.quicksand-semibold {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 600;
+}
+
+.quicksand-bold {
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+} 

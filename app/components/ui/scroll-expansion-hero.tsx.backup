@@ -1,0 +1,485 @@
+'use client';
+
+import {
+  useEffect,
+  useRef,
+  useState,
+  ReactNode,
+  TouchEvent,
+  WheelEvent,
+} from 'react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import Loader from '../Loader';
+
+// Fullscreen API types for different browsers
+interface FullscreenDocument extends Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void>;
+  mozCancelFullScreen?: () => Promise<void>;
+  msExitFullscreen?: () => Promise<void>;
+}
+
+interface FullscreenVideoElement extends HTMLVideoElement {
+  webkitRequestFullscreen?: () => Promise<void>;
+  mozRequestFullScreen?: () => Promise<void>;
+  msRequestFullscreen?: () => Promise<void>;
+}
+
+interface ScrollExpandMediaProps {
+  mediaType?: 'video' | 'image';
+  mediaSrc: string;
+  posterSrc?: string;
+  bgImageSrc: string;
+  title?: string;
+  date?: string;
+  scrollToExpand?: string;
+  textBlend?: boolean; // kept for backward compatibility; not used in this component
+  children?: ReactNode;
+  // When top of media crosses this viewport height fraction, start capture (e.g., 0.7 => 70% of viewport)
+  activationTopVH?: number;
+  // While top of media above this viewport height fraction, keep capture (e.g., 0.85)
+  retentionTopVH?: number;
+  // Sticky header height compensation in pixels
+  headerOffsetPx?: number;
+}
+
+const ScrollExpandMedia = ({
+  mediaType = 'video',
+  mediaSrc,
+  posterSrc,
+  bgImageSrc,
+  title,
+  date,
+  scrollToExpand,
+  children,
+  activationTopVH = 0.7,
+  retentionTopVH = 0.85,
+  headerOffsetPx = 80,
+}: ScrollExpandMediaProps) => {
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [showContent, setShowContent] = useState<boolean>(false);
+  const [mediaFullyExpanded, setMediaFullyExpanded] = useState<boolean>(false);
+  const [touchStartY, setTouchStartY] = useState<number>(0);
+  const [isMobileState, setIsMobileState] = useState<boolean>(false);
+  const [isCapturing, setIsCapturing] = useState<boolean>(false);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(true);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  
+  // Debug: log when isFullscreen changes
+  useEffect(() => {
+    console.log('isFullscreen changed to:', isFullscreen);
+  }, [isFullscreen]);
+
+  const sectionRef = useRef<HTMLDivElement | null>(null);
+  const mediaRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const modalVideoRef = useRef<HTMLVideoElement | null>(null);
+  const preloadModalRef = useRef<HTMLVideoElement | null>(null);
+  const [isModalPlaying, setIsModalPlaying] = useState<boolean>(true);
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [duration, setDuration] = useState<number>(0);
+  const [showControls, setShowControls] = useState<boolean>(false);
+
+  // Fullscreen handling - try native API first, fallback to modal
+  const requestFs = async (): Promise<void> => {
+    console.log('requestFs called!');
+    const video = videoRef.current as FullscreenVideoElement;
+    if (!video) {
+      console.log('No video element found!');
+      return;
+    }
+    
+    // For mobile devices, always use modal fallback
+    if (window.innerWidth < 768) {
+      console.log('Mobile device detected, using modal fallback');
+      setIsLoading(true);
+      try { video.pause(); } catch {}
+      console.log('Setting isFullscreen to true');
+      setIsFullscreen(true);
+      // Hide loader after a short delay to show the modal
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      return;
+    }
+    
+    try {
+      // Try native fullscreen API first (desktop only)
+      if (video.requestFullscreen) {
+        await video.requestFullscreen();
+        return;
+      } else if (video.webkitRequestFullscreen) {
+        await video.webkitRequestFullscreen();
+        return;
+      } else if (video.mozRequestFullScreen) {
+        await video.mozRequestFullScreen();
+        return;
+      } else if (video.msRequestFullscreen) {
+        await video.msRequestFullscreen();
+        return;
+      }
+    } catch (error) {
+      console.log('Native fullscreen failed, using modal fallback');
+    }
+    
+    // Fallback to modal-style fullscreen
+    try { video.pause(); } catch {}
+    setIsFullscreen(true);
+  };
+  
+  const exitFs = async (): Promise<void> => {
+    const doc = document as FullscreenDocument;
+    // Try to exit native fullscreen first
+    if (document.fullscreenElement || doc.webkitFullscreenElement || 
+        doc.mozFullScreenElement || doc.msFullscreenElement) {
+      try {
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+          return;
+        } else if (doc.webkitExitFullscreen) {
+          await doc.webkitExitFullscreen();
+          return;
+        } else if (doc.mozCancelFullScreen) {
+          await doc.mozCancelFullScreen();
+          return;
+        } else if (doc.msExitFullscreen) {
+          await doc.msExitFullscreen();
+          return;
+        }
+      } catch (error) {
+        console.log('Native fullscreen exit failed');
+      }
+    }
+    
+    // Fallback to modal exit
+    const src = modalVideoRef.current;
+    const dst = videoRef.current;
+    if (src && dst) {
+      try { dst.currentTime = src.currentTime || 0; } catch {}
+      try { await ensureCanPlay(dst); await dst.play(); } catch {}
+    }
+    setIsFullscreen(false);
+  };
+
+  // Lock body scroll while dialog open and sync modal video instantly
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const body = document.body;
+    const prevOverflow = body.style.overflow;
+    const run = async () => {
+      if (isFullscreen) {
+        body.style.overflow = 'hidden';
+        const src = videoRef.current;
+        const dst = modalVideoRef.current;
+        if (dst) {
+          try {
+            if (src) dst.currentTime = src.currentTime || 0;
+            dst.muted = isMuted;
+            await ensureCanPlay(dst);
+            await dst.play();
+          } catch {}
+        }
+      } else {
+        body.style.overflow = prevOverflow;
+      }
+    };
+    run();
+    return () => { body.style.overflow = prevOverflow; };
+  }, [isFullscreen, isMuted]);
+
+  // Preload modal video in background for instant open
+  useEffect(() => {
+    const v = preloadModalRef.current;
+    if (!v) return;
+    try { v.preload = 'auto'; v.load(); } catch {}
+  }, []);
+
+  // Listen for fullscreen changes to sync state
+  useEffect(() => {
+    const doc = document as FullscreenDocument;
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !doc.webkitFullscreenElement && 
+          !doc.mozFullScreenElement && !doc.msFullscreenElement) {
+        // Exited fullscreen
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+
+  // Wait for video to be ready to play
+  const ensureCanPlay = async (v: HTMLVideoElement): Promise<void> => {
+    if (v.readyState >= 2) return; // HAVE_CURRENT_DATA
+    await new Promise<void>((resolve) => {
+      const onCanPlay = () => {
+        v.removeEventListener('canplay', onCanPlay);
+        resolve();
+      };
+      v.addEventListener('canplay', onCanPlay, { once: true });
+      // safety timeout
+      setTimeout(() => {
+        v.removeEventListener('canplay', onCanPlay);
+    const v = videoRef.current;
+    if (!v) return;
+    if (isPlaying) {
+      if (isMuted) {
+        try { v.muted = false; setIsMuted(false); await ensureCanPlay(v); await v.play(); } catch {}
+      } else {
+        try { v.muted = true; setIsMuted(true); } catch {}
+      }
+    }
+  }}
+  onTimeUpdate={() => {
+    if (videoRef.current) {
+      setCurrentTime(videoRef.current.currentTime);
+    }
+  }}
+  onLoadedMetadata={() => {
+    if (videoRef.current) {
+      setDuration(videoRef.current.duration);
+    }
+  }}
+  onMouseEnter={() => setShowControls(true)}
+  onMouseLeave={() => setShowControls(false)}
+  controls={false}
+  disablePictureInPicture
+  disableRemotePlayback
+/>
+
+// ... (rest of the code remains the same)
+
+{isPlaying && isMuted && (
+  <button
+    aria-label='Unmute'
+    onClick={async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const v = videoRef.current;
+      if (!v) return;
+      try {
+        v.muted = false;
+        setIsMuted(false);
+        await ensureCanPlay(v);
+        await v.play();
+      } catch {}
+    }}
+    className='w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition pointer-events-auto z-[60]
+               bg-[#eb9c7d] hover:bg-[#98c5b1] active:bg-[#98c5b1] focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-transparent 
+               transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95'
+  >
+    {/* Speaker icon */}
+    <svg width='22' height='22' viewBox='0 0 24 24' fill='currentColor' className='text-white'>
+      <path d='M3 10v4h4l5 5V5L7 10H3z'></path>
+      <path d='M16 7c1.5 1.5 1.5 8.5 0 10' fill='none' stroke='currentColor' strokeWidth='2' />
+      <path d='M19 4c3 3 3 14 0 17' fill='none' stroke='currentColor' strokeWidth='2' />
+    </svg>
+  </button>
+)}
+
+{/* בקרי זמן */}
+{isPlaying && (showControls || isMobileState) && (
+  <div className='absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent p-4 pointer-events-auto'
+       onMouseEnter={() => setShowControls(true)}
+       onMouseLeave={() => setShowControls(false)}>
+    {/* פס זמן */}
+    <div className='mb-3'>
+      <div 
+        className='relative w-full h-2 bg-white/30 rounded-full cursor-pointer'
+        onClick={handleProgressChange}
+      >
+        <div 
+          className='absolute top-0 left-0 h-full bg-white rounded-full transition-all duration-200'
+          style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+        />
+        <div 
+          className='absolute top-1/2 w-4 h-4 bg-white rounded-full shadow-lg transform -translate-y-1/2 -translate-x-1/2 cursor-grab active:cursor-grabbing'
+          style={{ left: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+        />
+      </div>
+      <div className='flex justify-between mt-1 text-xs text-white/80'>
+        <span>{formatTime(currentTime)}</span>
+        <span>{formatTime(duration)}</span>
+      </div>
+                        <div
+                          aria-hidden
+                          className='absolute blur-lg pointer-events-none'
+                          style={{
+                            top: '100%',
+                            height: gradientHeight,
+                            width: '100vw',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 5,
+                            background: 'linear-gradient(0deg, #eb9c7d 0%, rgba(235,156,125,0) 80%)',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className='relative w-full h-full'>
+                    <Image
+                      src={mediaSrc}
+                      alt={title || 'Media content'}
+                      width={1280}
+                      height={720}
+                      className='object-cover w-full h-full rounded-xl'
+                    />
+
+                    <motion.div
+                      className='absolute inset-0 rounded-xl bg-black/50'
+                      initial={{ opacity: 0.7 }}
+                      animate={{ opacity: 0.7 - scrollProgress * 0.3 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                  </div>
+                )}
+
+                {(date || scrollToExpand) && (
+                  <div className='flex relative z-10 flex-col items-center mt-4 text-center transition-none pointer-events-none'>
+                    {date && (
+                      <p
+                        className='text-2xl text-blue-200'
+                        style={{ transform: `translateX(-${textTranslateX}vw)` }}
+                      >
+                        {date}
+                      </p>
+                    )}
+                    {scrollToExpand && (
+                      <p
+                        className='font-medium font-staff text-center text-blue-200'
+                        style={{ transform: `translateX(${textTranslateX}vw)` }}
+                      >
+                        {scrollToExpand}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Title overlay removed per request */}
+            </div>
+
+            <motion.section
+              className='flex flex-col px-8 py-10 w-full md:px-16 lg:py-20'
+              initial={{ opacity: 0 }}
+              animate={{ opacity: showContent ? 1 : 0 }}
+              transition={{ duration: 0.7 }}
+            >
+              {children}
+            </motion.section>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    {isFullscreen && createPortal(
+      <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/80'>
+        <div className='relative w-[100vw] h-[100dvh]'>
+          <video
+            ref={modalVideoRef}
+            src={mediaSrc}
+            poster={posterSrc}
+            autoPlay
+            muted={isMuted}
+            loop
+            playsInline
+            preload='auto'
+            className='object-contain w-full h-full bg-black'
+            controls={false}
+            disablePictureInPicture
+            disableRemotePlayback
+            onPlay={() => setIsModalPlaying(true)}
+            onPause={() => setIsModalPlaying(false)}
+          />
+          <button
+            type='button'
+            aria-label='יציאה'
+            className='absolute top-4 right-4 px-3 py-2 rounded-full shadow-lg text-white font-medium font-staff
+                       bg-[#eb9c7d] hover:bg-[#98c5b1] active:bg-[#98c5b1] focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-transparent 
+                       transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95'
+            onClick={async (e) => { 
+              e.stopPropagation(); 
+              e.preventDefault();
+              await exitFs(); 
+            }}
+          >
+            יציאה
+          </button>
+
+          {/* Controls inside the dialog */}
+          <div className='flex absolute bottom-6 left-1/2 gap-3 items-center -translate-x-1/2'>
+            <button
+              type='button'
+              aria-label='נגן'
+              className='px-4 py-2 rounded-full shadow-lg text-white font-medium font-staff
+                         bg-[#eb9c7d] hover:bg-[#98c5b1] active:bg-[#98c5b1] focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-transparent 
+                         transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95'
+              onClick={async (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const v = modalVideoRef.current;
+                if (!v) return;
+                try { await ensureCanPlay(v); await v.play(); } catch {}
+              }}
+            >
+              {isModalPlaying ? 'מנגן' : 'נגן'}
+            </button>
+
+            <button
+              type='button'
+              aria-label='עצור'
+              className='px-4 py-2 rounded-full shadow-lg text-white font-medium font-staff
+                         bg-[#eb9c7d] hover:bg-[#98c5b1] active:bg-[#98c5b1] focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-transparent 
+                         transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95'
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const v = modalVideoRef.current;
+                if (!v) return;
+                try { v.pause(); setIsModalPlaying(false); } catch {}
+              }}
+            >
+              עצור
+            </button>
+          </div>
+
+          {/* Exit to site button inside dialog */}
+          <button
+            type='button'
+            aria-label='יציאה לאתר'
+            className='absolute bottom-6 right-4 px-4 py-2 rounded-full shadow-lg text-white font-medium font-staff
+                       bg-[#eb9c7d] hover:bg-[#98c5b1] active:bg-[#98c5b1] focus:outline-none focus:ring-2 focus:ring-white/80 focus:ring-offset-2 focus:ring-offset-transparent 
+                       transition-all duration-200 cursor-pointer transform hover:scale-105 active:scale-95'
+            onClick={async (e) => { 
+              e.stopPropagation(); 
+              e.preventDefault();
+              await exitFs(); 
+            }}
+          >
+            יציאה לאתר
+          </button>
+        </div>
+      </div>, document.body)}
+    </>
+  );
+};
+
+export default ScrollExpandMedia;

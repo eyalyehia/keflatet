@@ -1,0 +1,32 @@
+# Hebrew Content and RTL Layout Guidelines
+
+## Text Direction:
+- Always use `dir="rtl"` for containers with Hebrew text
+- Use `text-right` class for right-aligned text
+- Ensure proper text flow for mixed Hebrew/English content
+
+## Font Usage:
+- Use custom Hebrew fonts from [app/fonts/](mdc:app/fonts/)
+- Load fonts properly in [app/layout.tsx](mdc:app/layout.tsx)
+- Ensure fallback fonts for better loading experience
+
+## Content Structure:
+- Hebrew titles and headings should be prominent
+- Use proper Hebrew punctuation and grammar
+- Maintain consistent terminology across the site
+- Consider cultural context for content placement
+
+## Layout Considerations:
+- Cards and sections should flow right-to-left
+- Icons and images should be positioned appropriately for RTL
+- Animation directions should respect RTL layout
+- Spacing and margins should work well with Hebrew text
+
+## Accessibility:
+- Ensure proper contrast ratios for Hebrew text
+- Use semantic HTML elements for better screen reader support
+- Test with Hebrew screen readers when possible
+description:
+globs:
+alwaysApply: false
+---

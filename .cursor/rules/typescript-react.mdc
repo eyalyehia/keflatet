@@ -1,0 +1,40 @@
+# TypeScript and React Coding Standards
+
+## Component Structure:
+- Always use functional components with TypeScript
+- Use "use client" directive for client-side components
+- Export components as default when they are the main export
+- Use proper TypeScript interfaces for props
+
+## Import Organization:
+- React imports first
+- Third-party libraries (framer-motion, lucide-react)
+- Internal components and utilities
+- Relative imports last
+
+## Animation Guidelines:
+- Use Framer Motion for all animations
+- Define animation variants outside the component
+- Use consistent timing (0.6s for standard animations)
+- Implement stagger effects for lists
+
+## Styling:
+- Use Tailwind CSS classes
+- Inline styles only for dynamic values
+- Use the project's color palette consistently
+- Implement responsive design with Tailwind breakpoints
+
+## Hebrew Text Support:
+- Always use `dir="rtl"` for Hebrew text containers
+- Use `text-right` for right-aligned text
+- Ensure proper font loading for Hebrew characters
+
+## Code Quality:
+- Use meaningful variable names
+- Add JSDoc comments for complex functions
+- Keep components focused and single-purpose
+- Use proper TypeScript types instead of 'any'
+description:
+globs:
+alwaysApply: false
+---

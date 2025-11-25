@@ -1,0 +1,145 @@
+/* FormsDownload Custom Styles */
+
+/* Smooth animations */
+.forms-download-container * {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom scrollbar */
+.forms-download-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.forms-download-container::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.forms-download-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #2a2b26, #3a3b36);
+  border-radius: 10px;
+}
+
+.forms-download-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #3a3b36, #4a4b46);
+}
+
+/* Glass morphism effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+  border-radius: 20px;
+}
+
+/* Section transitions */
+.section-fade-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.section-fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.section-fade-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-fade-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: opacity 300ms, transform 300ms;
+}
+
+/* Form elements */
+.custom-input:focus {
+  border-color: #9acdbe;
+  box-shadow: 0 0 0 3px rgba(154, 205, 190, 0.2);
+}
+
+.custom-textarea:focus {
+  border-color: #9acdbe;
+  box-shadow: 0 0 0 3px rgba(154, 205, 190, 0.2);
+}
+
+.submit-button {
+  background: linear-gradient(135deg, #9acdbe, #7aadb6);
+  transition: all 0.3s ease;
+}
+
+.submit-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(154, 205, 190, 0.3);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+.submit-button:disabled {
+  background: linear-gradient(135deg, #cccccc, #999999);
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success animation */
+.success-checkmark {
+  animation: checkmark 0.6s ease-in-out;
+}
+
+@keyframes checkmark {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .glass-card {
+    border-radius: 15px;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .glass-card {
+    border-radius: 12px;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+  }
+}

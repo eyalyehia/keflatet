@@ -1,0 +1,46 @@
+.text-type {
+  display: inline-block;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.text-type__cursor {
+  margin-left: 0.25rem;
+  display: inline-block;
+  opacity: 1;
+}
+
+.text-type__cursor--hidden {
+  display: none;
+}
+
+/* Responsive text adjustments */
+@media (max-width: 640px) {
+  .text-type {
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  .text-type {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .text-type {
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+}
+
+@media (min-width: 1025px) {
+  .text-type {
+    font-size: 1.25rem;
+    line-height: 1.8;
+  }
+} 
