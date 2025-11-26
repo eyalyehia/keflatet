@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
 
     // Email sending - via FormSubmit on the server side
     try {
-      const to = process.env.CONTACT_TO_EMAIL || 'orelbukris7777@gmail.com';
+      const to = process.env.CONTACT_TO_EMAIL || 'keflatet@gmail.com';
 
       // FormSubmit expects specific field names and format
       const formSubmitData = {
