@@ -127,7 +127,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="he" dir="rtl" suppressHydrationWarning={true}>
-      <head>
+      <head suppressHydrationWarning={true}>
         <link rel="icon" type="image/png" href="/logo.png" />
         <link rel="shortcut icon" type="image/png" href="/logo.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
