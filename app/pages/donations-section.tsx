@@ -1065,7 +1065,16 @@ export default function DonationsSection() {
                   <button
                     className="w-full md:w-auto px-12 py-4 text-xl font-bold font-staff bg-gradient-to-r from-[#f5a383] to-[#9dd0bf] text-white border-0 shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 cursor-pointer rounded-lg"
                     aria-label="לחצו כאן לביצוע התרומה"
-                    onClick={handleSubmit}
+                    onClick={() => {
+                      try {
+                        const el = typeof document !== 'undefined' ? document.getElementById('תרומה') : null;
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } else if (typeof window !== 'undefined') {
+                          window.location.href = '/#תרומה';
+                        }
+                      } catch {}
+                    }}
                   >
                     <motion.div
                       animate={{
