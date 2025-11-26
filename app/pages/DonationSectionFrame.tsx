@@ -8,7 +8,7 @@ function DonationSectionFrame() {
             <iframe
                 src="https://www.matara.pro/nedarimplus/online/?mosad=7014073"
                 title="תשלום תרומה - נדרים פלוס"
-                className='md:min-h-[1600px] min-h-[2050px] mx-auto rounded-3xl w-full'
+                className='md:min-h-[1200px] min-h-[1200px] mx-auto rounded-3xl w-full'
                 style={{ border: '0', flexGrow: 1 }}
                 scrolling='no'
                 sandbox="allow-scripts allow-forms allow-same-origin allow-popups allow-popups-to-escape-sandbox"
