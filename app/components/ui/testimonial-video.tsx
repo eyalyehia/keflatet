@@ -25,6 +25,7 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
   const userWantsPlayRef = useRef(false);
   const userPausedRef = useRef(false);
   const resumeScheduledRef = useRef<null | (() => void)>(null);
+  const playStartTimeRef = useRef<number>(0); // זמן תחילת הניגון - למניעת השתקה מיידית
   
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inView = useInView(containerRef, { once: true, margin: '0px 0px -20% 0px' });
@@ -36,6 +37,12 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
     const handleScroll = () => {
       if (!containerRef.current || !isPlaying || !videoRef.current) return;
 
+      // לא משתיקים ב-2 השניות הראשונות אחרי תחילת הניגון - כדי לא לפגוע ב-unmute
+      const timeSinceStart = Date.now() - playStartTimeRef.current;
+      if (timeSinceStart < 2000) {
+        return;
+      }
+
       const rect = containerRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       
@@ -44,20 +51,20 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
       const visibleHeight = Math.min(rect.bottom, windowHeight) - Math.max(rect.top, 0);
       const visibilityRatio = Math.max(0, visibleHeight) / containerHeight;
       
-      // Mute if less than 70% of video is visible or if scrolled past the video
-      const shouldMute = visibilityRatio < 0.7 || rect.bottom < windowHeight * 0.6;
+      // Mute if less than 50% of video is visible (הורדנו מ-70% ל-50% כדי להיות פחות רגיש)
+      const shouldMute = visibilityRatio < 0.5;
       
       if (shouldMute && !videoRef.current.muted) {
         console.log('🔇 משתיק testimonial video בגלילה למטה', { visibilityRatio, rectBottom: rect.bottom, windowHeight });
         videoRef.current.muted = true;
-      } else if (!shouldMute && videoRef.current.muted) {
+      } else if (!shouldMute && videoRef.current.muted && userWantsPlayRef.current) {
         console.log('🔊 מחזיר אודיו לtestimonial video בגלילה חזרה למעלה');
         videoRef.current.muted = false;
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll();
+    // לא מפעילים handleScroll מיד - רק על גלילה בפועל
     
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isPlaying, videoId, currentPlayingVideo, setCurrentPlayingVideo]);
@@ -90,11 +97,8 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
       setIsStarting(false);
       startGuardRef.current = false;
       userWantsPlayRef.current = true;
-      // השבתת MUTE אחרי התחלת ניגון בפועל
-      const v = videoRef.current;
-      if (v) {
-        try { v.muted = false; } catch {}
-      }
+      playStartTimeRef.current = Date.now(); // שמירת זמן תחילת הניגון
+      // הערה: ה-unmute עכשיו קורה ב-togglePlay ישירות במחוות המשתמש
     };
 
     const handlePause = () => {
@@ -240,12 +244,20 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
               setShowVideoLoading(false);
               const playPromise = currentVideo.play();
               if (playPromise && typeof playPromise.then === 'function') {
-                playPromise.catch((err: unknown) => {
-                  console.error('שגיאה בניסיון ניגון (לא חוסם מחווה):', err);
-                  setShowVideoLoading(false);
-                  setIsStarting(false);
-                  startGuardRef.current = false;
-                });
+                playPromise
+                  .then(() => {
+                    // unmute מיד אחרי שה-play הצליח
+                    try {
+                      currentVideo.muted = false;
+                      console.log('🔊 וידאו unmuted בהצלחה (lazy load)');
+                    } catch {}
+                  })
+                  .catch((err: unknown) => {
+                    console.error('שגיאה בניסיון ניגון (לא חוסם מחווה):', err);
+                    setShowVideoLoading(false);
+                    setIsStarting(false);
+                    startGuardRef.current = false;
+                  });
               }
               return true;
             }
@@ -278,11 +290,20 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
         setShowVideoLoading(true);
         
         // קריאת play מיידית בתוך מחוות המשתמש (ללא המתנות)
+        // חשוב: unmute קורה כאן ישירות במחוות המשתמש כדי לעבוד ב-iOS!
         try {
+          // במובייל - קודם ננסה לנגן muted, ואז נבטל mute מיד
           const playPromise = video.play();
           if (playPromise && typeof playPromise.then === 'function') {
             playPromise
               .then(() => {
+                // unmute מיד אחרי שה-play הצליח - עדיין בתוך מחוות המשתמש
+                try {
+                  video.muted = false;
+                  console.log('🔊 וידאו unmuted בהצלחה במובייל');
+                } catch (muteErr) {
+                  console.warn('לא הצלחנו לבטל mute:', muteErr);
+                }
                 setShowVideoLoading(false);
               })
               .catch((err: unknown) => {
@@ -294,6 +315,8 @@ const TestimonialVideo = ({ videoPath, title, className = '', videoId, thumbnail
                 setShowVideoLoading(false);
               });
           } else {
+            // fallback - unmute מיד
+            try { video.muted = false; } catch {}
             setShowVideoLoading(false);
           }
         } catch (err) {
