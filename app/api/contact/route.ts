@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
       };
 
       console.log('Sending to FormSubmit:', { to, data: formSubmitData });
-
+// 
       const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
         method: 'POST',
         headers: {
