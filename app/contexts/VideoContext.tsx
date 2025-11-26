@@ -54,16 +54,17 @@ export const VideoProvider = ({ children }: VideoProviderProps) => {
       const videoRef = ref(storage, videoPath);
       const url = await getDownloadURL(videoRef);
       
-      // יצירת אלמנט וידאו לטעינה מוקדמת
+      // יצירת אלמנט וידאו לטעינה מוקדמת - טעינה מלאה תמיד!
       const video = document.createElement('video');
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-      video.preload = isMobile ? 'metadata' : 'auto'; // במובייל - רק מטאדטה, בדסקטופ - הכל
+      video.preload = 'auto'; // תמיד טעינה מלאה - גם במובייל!
       video.muted = true; // הגדרת muted למניעת בעיות autoplay
-      if (isMobile) {
-        video.setAttribute('playsinline', 'true');
-        video.setAttribute('webkit-playsinline', 'true');
-      }
+      video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
       video.src = url;
+      
+      // התחלת טעינה מפורשת
+      video.load();
       
       // המתנה לטעינה מלאה של הוידאו
       await new Promise((resolve, reject) => {
@@ -84,13 +85,9 @@ export const VideoProvider = ({ children }: VideoProviderProps) => {
           }
         };
         
-        // המתנה לטעינת מטאדטה
+        // המתנה לטעינת מטאדטה - רק לוג, לא מסמנים מוכן!
         video.onloadedmetadata = () => {
-          console.log('📊 מטאדטה של הוידאו נטענה');
-          // במובייל - אם זה רק מטאדטה, נחשב מוכן אבל נמתין עוד קצת
-          if (isMobile && video.preload === 'metadata') {
-            setTimeout(() => resolveOnce(), 1000); // ממתין שנייה לוודא שהמטאדטה נטענה
-          }
+          console.log('📊 מטאדטה של הוידאו נטענה - ממשיך לטעון...');
         };
         
         // המתנה לטעינת נתונים
@@ -104,20 +101,10 @@ export const VideoProvider = ({ children }: VideoProviderProps) => {
           resolveOnce();
         };
         
-        // המתנה לטעינה מלאה (גיבוי)
+        // המתנה לטעינה מלאה (גיבוי) - רק אם readyState === 4
         video.oncanplay = () => {
-          console.log('🎬 הוידאו מוכן לנגינה');
-          // בדיקה אם יש מספיק נתונים לנגינה
-          if (video.readyState >= 4) { // חזרה ל-4 לטעינה מלאה
-            resolveOnce();
-          } else {
-            // אם אין מספיק נתונים, נמתין עוד קצת
-            setTimeout(() => {
-              if (video.readyState >= 3) { // עם נתונים חלקיים
-                resolveOnce();
-              }
-            }, 2000);
-          }
+          console.log('🎬 הוידאו מוכן לנגינה, readyState:', video.readyState);
+          // נמתין ל-canplaythrough שמבטיח טעינה מלאה
         };
         
         video.onerror = () => {
@@ -146,11 +133,12 @@ export const VideoProvider = ({ children }: VideoProviderProps) => {
           rejectOnce(error);
         };
         
-        // הגדרת timeout אחרי שהפונקציות מוכנות
+        // הגדרת timeout אחרי שהפונקציות מוכנות - timeout ארוך יותר לטעינה מלאה
         timeoutId = setTimeout(() => {
-          console.warn('⚠️ טעינת וידאו ארוכה - ממשיך ברקע...');
-          // לא נכשיל את הטעינה, רק נדפיס אזהרה
-        }, isMobile ? 45000 : 60000); // 45 שניות במובייל, 60 שניות בדסקטופ
+          console.warn('⚠️ טעינת וידאו ארוכה מאוד - מסמן כמוכן כדי לא לתקוע את המשתמש');
+          // אחרי timeout ארוך, נסמן כמוכן כדי לא לתקוע את המשתמש לנצח
+          safeResolveOnce();
+        }, isMobile ? 30000 : 45000); // 30 שניות במובייל, 45 שניות בדסקטופ
       });
       
       setMainVideo({
