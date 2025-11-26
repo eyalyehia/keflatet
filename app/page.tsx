@@ -8,12 +8,16 @@ import HeroSection from './pages/HeroSection';
 import LoadPage from './components/loadpage/LoadPage';
 import Footer from './pages/Footer';
 import Script from 'next/script';
+import { useVideo } from './contexts/VideoContext';
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showTextAnimation, setShowTextAnimation] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
   const mainContentRef = useRef<HTMLDivElement>(null);
+  
+  // בדיקת מצב הווידאו - אם לא מוכן, נציג מסך טעינה
+  const { mainVideo } = useVideo();
 
   // סימון שהקומפוננטה רצה בצד הקליינט בלבד (אחרי Hydration)
   useEffect(() => {
@@ -21,19 +25,21 @@ export default function Home() {
   }, []);
 
   // קביעת מצב ראשוני בצד לקוח בלבד כדי למנוע Hydration mismatch בערכי isLoading/showTextAnimation
+  // חשוב: אם הווידאו לא מוכן - תמיד מציגים מסך טעינה!
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const shown = window.sessionStorage.getItem('splashShown');
-      // במסך הראשון תמיד מציגים את מסך הטעינה, גם אם נכנסנו עם hash לקטע בעמוד
-      // רק אם כבר ראינו את מסך הטעינה (splashShown), נדלג עליו בביקורים הבאים
-      setIsLoading(!shown);
-      // אם כבר ראינו את מסך הטעינה, הראה את האנימציה מיד
-      setShowTextAnimation(!!shown);
+      // אם הווידאו כבר מוכן וכבר ראינו את מסך הטעינה - אפשר לדלג
+      // אחרת - תמיד מציגים מסך טעינה כדי שהווידאו ייטען
+      const shouldSkipLoading = shown && mainVideo.isReady;
+      setIsLoading(!shouldSkipLoading);
+      // אם כבר ראינו את מסך הטעינה והווידאו מוכן, הראה את האנימציה מיד
+      setShowTextAnimation(!!shouldSkipLoading);
     } catch {
       // במקרה של שגיאה נשאיר את ברירת המחדל (isLoading=true, showTextAnimation=false)
     }
-  }, []);
+  }, [mainVideo.isReady]);
 
   const handleLoadComplete = () => {
     setIsLoading(false);

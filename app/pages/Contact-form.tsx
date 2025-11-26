@@ -141,7 +141,7 @@ export function ContactForm() {
         _captcha: 'false'
       }
 
-      const res = await fetch('https://formsubmit.co/ajax/orelbukris7777@gmail.com', {
+      const res = await fetch('https://formsubmit.co/ajax/keflatet@gmail.com', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

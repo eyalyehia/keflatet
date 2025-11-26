@@ -65,13 +65,9 @@ const HeroSection = ({ showTextAnimation }: HeroSectionProps) => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // וידוא שהוידאו נטען תמיד, גם ברענון
-  useEffect(() => {
-    if (!isReady && !loading && !error) {
-      console.log('🎬 טוען וידאו ב-HeroSection (ברענון)');
-      preloadVideo('כיף לתת 72.4mb.mp4');
-    }
-  }, [isReady, loading, error, preloadVideo]);
+  // הסרנו את טעינת הגיבוי - הסרטון נטען רק ב-LoadPage
+  // כך מובטח שהמשתמש לא יראה סרטון נטען או עומד
+  // אם המשתמש מרענן, הוא יראה שוב את מסך הטעינה שיטען את הסרטון
   
   // Only show the futuristic hero when text animation should be visible
   if (!showTextAnimation) {
