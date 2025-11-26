@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         _replyto: emailV,
         _captcha: 'false'
       };
-
+// 
       console.log('Sending to FormSubmit:', { to, data: formSubmitData });
 
       const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
