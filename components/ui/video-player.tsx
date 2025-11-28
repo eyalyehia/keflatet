@@ -211,10 +211,12 @@ return (
             onClick={togglePlay}
             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 flex items-center justify-center group"
           >
-            {isPlaying ? (
-              <Pause className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform" />
-            ) : (
+            {!isPlaying ? (
               <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform ml-1" />
+            ) : isMuted ? (
+              <VolumeX className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform" />
+            ) : (
+              <Pause className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform" />
             )}
           </Button>
         </motion.div>
@@ -223,6 +225,21 @@ return (
 
     {/* Simple timeline overlay - always visible */}
     <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          const video = videoRef.current;
+          if (!video) return;
+          if (video.paused) {
+            video.play();
+          } else {
+            video.pause();
+          }
+        }}
+        className="p-1.5 text-white hover:bg-white/20 rounded-full transition-colors"
+      >
+        {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5" />}
+      </button>
       <span className="text-white text-xs sm:text-sm font-medium drop-shadow-lg">
         {formatTime(currentTime)}
       </span>
