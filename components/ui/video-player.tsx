@@ -219,6 +219,7 @@ return (
 
     {/* Simple timeline overlay - always visible */}
     <div className="absolute bottom-4 left-4 right-4 flex items-center gap-2">
+      {/* Play/Pause button */}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -233,6 +234,25 @@ return (
         className="p-1.5 text-white hover:bg-white/20 rounded-full transition-colors"
       >
         {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5" />}
+      </button>
+
+      {/* Mute/Unmute button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          const video = videoRef.current;
+          if (!video) return;
+          const nextMuted = !isMuted;
+          try { video.muted = nextMuted; } catch {}
+          setIsMuted(nextMuted);
+        }}
+        className="p-1.5 text-white hover:bg-white/20 rounded-full transition-colors"
+      >
+        {isMuted ? (
+          <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />
+        ) : (
+          <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+        )}
       </button>
       <span className="text-white text-xs sm:text-sm font-medium drop-shadow-lg">
         {formatTime(currentTime)}
