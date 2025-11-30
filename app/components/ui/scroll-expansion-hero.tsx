@@ -70,6 +70,7 @@ const ScrollExpandMedia = ({
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [muteButtonDismissed, setMuteButtonDismissed] = useState<boolean>(false); // כפתור קול נעלם לאחר לחיצה
   
   // Debug: log when isFullscreen changes
   useEffect(() => {
@@ -757,32 +758,7 @@ const ScrollExpandMedia = ({
                         loop
                         playsInline
                         preload='auto'
-                        className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover lg:object-contain'} rounded-xl cursor-pointer`}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const v = videoRef.current;
-                          if (!v) return;
-                          if (isPlaying) {
-                            // Second click - pause the video
-                            try { 
-                              v.pause(); 
-                              setIsPlaying(false);
-                            } catch {}
-                          } else {
-                            // First click - play with audio
-                            const ok = await playWithAudio(v);
-                            if (!ok) {
-                              // Fallback to muted playback
-                              try {
-                                v.muted = true;
-                                setIsMuted(true);
-                                await ensureCanPlay(v);
-                                await v.play();
-                                setIsPlaying(true);
-                              } catch {}
-                            }
-                          }
-                        }}
+                        className={`w-full h-full ${isFullscreen ? 'object-contain' : 'object-cover lg:object-contain'} rounded-xl pointer-events-none`}
                         onPlay={() => setIsPlaying(true)}
                         onPause={() => setIsPlaying(false)}
                         onTimeUpdate={(e) => {
@@ -872,11 +848,7 @@ const ScrollExpandMedia = ({
                             </svg>
                           </button>
                         )}
-
-
-
-
-                        {isPlaying && isMuted && (
+                        {isPlaying && isMuted && !muteButtonDismissed && (
                           <button
                             aria-label='Unmute'
                             onClick={async (e) => {
@@ -887,6 +859,7 @@ const ScrollExpandMedia = ({
                               try {
                                 v.muted = false;
                                 setIsMuted(false);
+                                setMuteButtonDismissed(true); // הסתר כפתור לצמיתות
                                 await ensureCanPlay(v);
                                 await v.play();
                               } catch {}

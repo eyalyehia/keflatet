@@ -71,11 +71,15 @@ const VideoPlayer = ({ src }: { src: string }) => {
   const [showControls, setShowControls] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
+  const [centerDismissed, setCenterDismissed] = useState(false); // כפתור מרכזי נעלם אחרי לחיצה
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    // בתחילת טען וידאו: להתחיל מושתק, להראות כפתור מרכזי
+    setCenterDismissed(false);
+    setIsMuted(true);
     try {
       video.muted = true;
     } catch {}
@@ -94,16 +98,12 @@ const VideoPlayer = ({ src }: { src: string }) => {
     }
   }, [src]);
 
+  // כפתור הפליי הקטן בתחתית – שליטה רגילה בניגון
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    // If video is playing but muted, first click should unmute and keep playing
-    if (!video.paused && isMuted) {
-      try { video.muted = false; } catch {}
-      setIsMuted(false);
-      setIsPlaying(true);
-    } else if (video.paused) {
-      // Start playing with sound
+
+    if (video.paused) {
       try { video.muted = false; } catch {}
       setIsMuted(false);
       video.play();
@@ -112,14 +112,6 @@ const VideoPlayer = ({ src }: { src: string }) => {
       video.pause();
       setIsPlaying(false);
     }
-    // הסתר את הכפתור אחרי לחיצה
-    setShowControls(false);
-    // הצג שוב אחרי 3 שניות אם עדיין מרחפים
-    setTimeout(() => {
-      if (isHovering) {
-        setShowControls(true);
-      }
-    }, 3000);
   };
 
 const handleTimeUpdate = () => {
@@ -197,9 +189,9 @@ return (
       onPause={() => setIsPlaying(false)}
     />
 
-    {/* כפתור Play/Pause במרכז */}
+    {/* כפתור מרכזי – פעם אחת בלבד, רק לביטול mute */}
     <AnimatePresence>
-      {showControls && (
+      {showControls && isMuted && !centerDismissed && (
         <motion.div
           className="absolute inset-0 flex items-center justify-center"
           initial={{ opacity: 0 }}
@@ -208,16 +200,18 @@ return (
           transition={{ duration: 0.3 }}
         >
           <Button
-            onClick={togglePlay}
+            onClick={() => {
+              const video = videoRef.current;
+              if (!video) return;
+              try { video.muted = false; } catch {}
+              setIsMuted(false);
+              setCenterDismissed(true);
+              setShowControls(false);
+            }}
             className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/30 hover:bg-white/30 transition-all duration-300 flex items-center justify-center group"
           >
-            {!isPlaying ? (
-              <Play className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform ml-1" />
-            ) : isMuted ? (
-              <VolumeX className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform" />
-            ) : (
-              <Pause className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform" />
-            )}
+            {/* אייקון מיוּט קבוע – לא מציג Play/Pause באמצע */}
+            <VolumeX className="w-8 h-8 sm:w-10 sm:h-10 text-white group-hover:scale-110 transition-transform" />
           </Button>
         </motion.div>
       )}

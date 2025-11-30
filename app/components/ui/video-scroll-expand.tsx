@@ -29,6 +29,7 @@ const VideoScrollExpand = ({
   const [isTouching, setIsTouching] = useState(false); // חדש - לניהול לחיצה במובייל
   const [isMuteButtonTouching, setIsMuteButtonTouching] = useState(false); // חדש - לניהול לחיצה על כפתור קול
   const [showAudioFeedback, setShowAudioFeedback] = useState(false); // חדש - לניהול feedback ויזואלי של האודיו
+  const [muteButtonDismissed, setMuteButtonDismissed] = useState(false); // חדש - הסתרת כפתור קול לאחר לחיצה
 
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -155,6 +156,12 @@ const VideoScrollExpand = ({
       videoRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
       console.log(newMutedState ? '🔇 אודיו מושתק' : '🔊 אודיו מופעל');
+      
+      // אם המשתמש הפעיל את הקול, הסתר את הכפתור לצמיתות
+      if (!newMutedState) {
+        setMuteButtonDismissed(true);
+        console.log('👋 כפתור קול הוסתר לצמיתות');
+      }
       
       // הצג feedback ויזואלי
       setShowAudioFeedback(true);
@@ -347,6 +354,16 @@ const VideoScrollExpand = ({
               e.stopPropagation();
               setIsTouching(false);
             }
+          }}
+          style={{ 
+            pointerEvents: 'auto', // תמיד מקבל אירועי לחיצה
+            zIndex: 1000,
+            position: 'relative',
+            minWidth: isMobile ? '80px' : '60px',
+            minHeight: isMobile ? '80px' : '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
           }}
         >
           {loading ? (
@@ -541,7 +558,7 @@ const VideoScrollExpand = ({
               </AnimatePresence>
               
               {/* כפתור קול */}
-              {isPlaying && (
+              {isPlaying && !muteButtonDismissed && (
                 <motion.div
                   className={`absolute z-30 ${
                     isMobile ? 'top-2 right-2' : 'top-4 right-4'
