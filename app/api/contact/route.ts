@@ -108,13 +108,18 @@ export async function POST(req: NextRequest) {
 
       console.log('Sending to FormSubmit:', { to, data: formSubmitData });
 // 
+      // FormSubmit AJAX expects form-encoded body (not raw JSON)
+      const formBody = new URLSearchParams();
+      Object.entries(formSubmitData).forEach(([key, value]) => {
+        formBody.append(key, String(value ?? ''));
+      });
+
       const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        body: JSON.stringify(formSubmitData),
+        body: formBody,
       });
 
       const responseData = await response.json().catch(() => ({}));
