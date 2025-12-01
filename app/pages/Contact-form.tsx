@@ -130,11 +130,12 @@ export function ContactForm() {
     try {
       console.log('Submitting form data:', formData)
       
-      // Send to our server API which handles email via Gmail SMTP
+      // Send to local API which uses FormSubmit on the server side
       const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify(formData),
       })
@@ -146,34 +147,26 @@ export function ContactForm() {
         return {}
       })
 
-      console.log('Response data:', data)
+      console.log('Response data from /api/contact:', data)
 
-      if (!res.ok) {
+      if (!res.ok || data.error) {
         throw new Error(data.error || 'שליחה נכשלה, אנא נסו שוב')
       }
 
-      // Check for success
-      if (data.ok) {
-        setSent(true)
-        
-        // Show warning if partial success
-        if (data.warning) {
-          setWarning(data.warning)
-        }
-        
-        // Reset form on success
-        setFormData({
-          subject: "",
-          firstName: "",
-          lastName: "",
-          phone: "",
-          email: "",
-          message: "",
-          notifications: false,
-        })
-      } else {
-        throw new Error(data.error || 'שליחה נכשלה, אנא נסו שוב')
-      }
+      // data.ok === true means at least ערוץ אחד הצליח (אימייל / וואטסאפ)
+      setWarning(typeof data.warning === 'string' ? data.warning : null)
+      setSent(true)
+      
+      // Reset form on success
+      setFormData({
+        subject: "",
+        firstName: "",
+        lastName: "",
+        phone: "",
+        email: "",
+        message: "",
+        notifications: false,
+      })
     } catch (err: any) {
       console.error('Form submission error:', err)
       setSent(false)
