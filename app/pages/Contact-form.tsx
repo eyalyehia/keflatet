@@ -130,31 +130,70 @@ export function ContactForm() {
     try {
       console.log('Submitting form data:', formData)
       
-      // Send to local API which uses FormSubmit on the server side
-      const res = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      })
-
-      console.log('Response status:', res.status, res.statusText)
-
-      const data = await res.json().catch((e) => {
-        console.error('Failed to parse response:', e)
-        return {}
-      })
-
-      console.log('Response data from /api/contact:', data)
-
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'שליחה נכשלה, אנא נסו שוב')
+      const results = { email: false, whatsapp: false, errors: [] as string[] }
+      
+      // 1. Send email via FormSubmit (client-side - required by FormSubmit)
+      try {
+        const formSubmitData = new FormData()
+        formSubmitData.append('name', `${formData.firstName} ${formData.lastName}`)
+        formSubmitData.append('email', formData.email)
+        formSubmitData.append('phone', formData.phone)
+        formSubmitData.append('message', `נושא: ${formData.subject}\n\n${formData.message}`)
+        formSubmitData.append('_subject', formData.subject ? `פנייה מהאתר: ${formData.subject}` : 'פנייה חדשה מהאתר')
+        formSubmitData.append('_replyto', formData.email)
+        formSubmitData.append('_captcha', 'false')
+        
+        const emailResponse = await fetch('https://formsubmit.co/ajax/keflatet@gmail.com', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+          },
+          body: formSubmitData,
+        })
+        
+        const emailData = await emailResponse.json()
+        console.log('FormSubmit response:', emailData)
+        
+        if (emailData.success === 'true' || emailData.success === true) {
+          results.email = true
+        } else {
+          // FormSubmit returns success:false when email needs verification
+          console.log('FormSubmit did not confirm success:', emailData.message)
+          // Don't add to errors if WhatsApp works - email will work after verification
+        }
+      } catch (emailErr: any) {
+        console.error('FormSubmit error:', emailErr)
+        results.errors.push(`שליחת אימייל נכשלה: ${emailErr.message}`)
+      }
+      
+      // 2. Send WhatsApp via server API
+      try {
+        const whatsappRes = await fetch('/api/contact', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify({ ...formData, skipEmail: true }),
+        })
+        const whatsappData = await whatsappRes.json()
+        console.log('WhatsApp API response:', whatsappData)
+        if (whatsappData.ok || whatsappData.whatsapp) {
+          results.whatsapp = true
+        }
+      } catch (whatsappErr: any) {
+        console.error('WhatsApp error:', whatsappErr)
       }
 
-      // data.ok === true means at least ערוץ אחד הצליח (אימייל / וואטסאפ)
-      setWarning(typeof data.warning === 'string' ? data.warning : null)
+      console.log('Final results:', results)
+
+      if (!results.email && !results.whatsapp) {
+        throw new Error('שליחה נכשלה בכל הערוצים')
+      }
+
+      if (results.errors.length > 0) {
+        setWarning('שליחה הצליחה חלקית')
+      }
       setSent(true)
       
       // Reset form on success
