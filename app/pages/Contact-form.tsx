@@ -130,24 +130,13 @@ export function ContactForm() {
     try {
       console.log('Submitting form data:', formData)
       
-      // Send directly to FormSubmit
-      const formSubmitData = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phone: formData.phone,
-        message: `נושא: ${formData.subject}\n\n${formData.message}`,
-        _subject: formData.subject ? `פנייה מהאתר: ${formData.subject}` : 'פנייה חדשה מהאתר',
-        _replyto: formData.email,
-        _captcha: 'false'
-      }
-
-      const res = await fetch('https://formsubmit.co/ajax/keflatet@gmail.com', {
+      // Send to our server API which handles email via Gmail SMTP
+      const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
         },
-        body: JSON.stringify(formSubmitData),
+        body: JSON.stringify(formData),
       })
 
       console.log('Response status:', res.status, res.statusText)
@@ -160,12 +149,17 @@ export function ContactForm() {
       console.log('Response data:', data)
 
       if (!res.ok) {
-        throw new Error(data.message || data.error || 'שליחה נכשלה, אנא נסו שוב')
+        throw new Error(data.error || 'שליחה נכשלה, אנא נסו שוב')
       }
 
-      // Check FormSubmit success response
-      if (data.success === 'true' || data.success === true) {
+      // Check for success
+      if (data.ok) {
         setSent(true)
+        
+        // Show warning if partial success
+        if (data.warning) {
+          setWarning(data.warning)
+        }
         
         // Reset form on success
         setFormData({
@@ -178,7 +172,7 @@ export function ContactForm() {
           notifications: false,
         })
       } else {
-        throw new Error('שליחה נכשלה, אנא נסו שוב')
+        throw new Error(data.error || 'שליחה נכשלה, אנא נסו שוב')
       }
     } catch (err: any) {
       console.error('Form submission error:', err)

@@ -91,11 +91,10 @@ export async function POST(req: NextRequest) {
 
     const results = { email: false, whatsapp: false, errors: [] as string[] };
 
-    // Email sending - via FormSubmit on the server side
+    // Email sending - via FormSubmit (free service, no setup required)
     try {
       const to = process.env.CONTACT_TO_EMAIL || 'keflatet@gmail.com';
-// 
-      // FormSubmit expects specific field names and format
+      
       const formSubmitData = {
         name: `${firstV} ${lastV}`,
         email: emailV,
@@ -103,16 +102,17 @@ export async function POST(req: NextRequest) {
         message: `נושא: ${subjectV}\n\n${messageV}`,
         _subject: subjectV ? `פנייה מהאתר: ${subjectV}` : 'פנייה חדשה מהאתר',
         _replyto: emailV,
-        _captcha: 'false'
+        _captcha: 'false',
+        _template: 'table'
       };
 
       console.log('Sending to FormSubmit:', { to, data: formSubmitData });
-// 
-      const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
+
+      const response = await fetch(`https://formsubmit.co/ajax/${to}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
+          'Accept': 'application/json',
         },
         body: JSON.stringify(formSubmitData),
       });
@@ -120,15 +120,10 @@ export async function POST(req: NextRequest) {
       const responseData = await response.json().catch(() => ({}));
       console.log('FormSubmit response:', { status: response.status, data: responseData });
 
-      if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || 'FormSubmit email send failed');
-      }
-
-      // Check if FormSubmit returned success
-      if (responseData.success === 'true' || responseData.success === true || response.status === 200) {
+      if (responseData.success === 'true' || responseData.success === true) {
         results.email = true;
       } else {
-        throw new Error('FormSubmit did not confirm success');
+        throw new Error(responseData.message || 'FormSubmit לא אישר את השליחה');
       }
     } catch (emailError: any) {
       console.error('Email sending failed:', emailError);
