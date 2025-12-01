@@ -130,24 +130,14 @@ export function ContactForm() {
     try {
       console.log('Submitting form data:', formData)
       
-      // Send directly to FormSubmit
-      const formSubmitData = {
-        name: `${formData.firstName} ${formData.lastName}`,
-        email: formData.email,
-        phone: formData.phone,
-        message: `נושא: ${formData.subject}\n\n${formData.message}`,
-        _subject: formData.subject ? `פנייה מהאתר: ${formData.subject}` : 'פנייה חדשה מהאתר',
-        _replyto: formData.email,
-        _captcha: 'false'
-      }
-
-      const res = await fetch('https://formsubmit.co/ajax/keflatet@gmail.com', {
+      // Send to local API which uses FormSubmit on the server side
+      const res = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
         },
-        body: JSON.stringify(formSubmitData),
+        body: JSON.stringify(formData),
       })
 
       console.log('Response status:', res.status, res.statusText)
@@ -157,29 +147,26 @@ export function ContactForm() {
         return {}
       })
 
-      console.log('Response data:', data)
+      console.log('Response data from /api/contact:', data)
 
-      if (!res.ok) {
-        throw new Error(data.message || data.error || 'שליחה נכשלה, אנא נסו שוב')
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'שליחה נכשלה, אנא נסו שוב')
       }
 
-      // Check FormSubmit success response
-      if (data.success === 'true' || data.success === true) {
-        setSent(true)
-        
-        // Reset form on success
-        setFormData({
-          subject: "",
-          firstName: "",
-          lastName: "",
-          phone: "",
-          email: "",
-          message: "",
-          notifications: false,
-        })
-      } else {
-        throw new Error('שליחה נכשלה, אנא נסו שוב')
-      }
+      // data.ok === true means at least ערוץ אחד הצליח (אימייל / וואטסאפ)
+      setWarning(typeof data.warning === 'string' ? data.warning : null)
+      setSent(true)
+      
+      // Reset form on success
+      setFormData({
+        subject: "",
+        firstName: "",
+        lastName: "",
+        phone: "",
+        email: "",
+        message: "",
+        notifications: false,
+      })
     } catch (err: any) {
       console.error('Form submission error:', err)
       setSent(false)
