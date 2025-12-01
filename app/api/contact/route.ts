@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       email = '',
       message = '',
       notifications = false,
+      skipEmail = false,
     } = body || {};
 
     // Server-side validation - mirrors client rules
@@ -89,56 +90,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'נא למלא אימייל או טלפון ליצירת קשר' }, { status: 400 });
     }
 
-    const results = { email: false, whatsapp: false, errors: [] as string[] };
+    const results = { email: skipEmail, whatsapp: false, errors: [] as string[] };
 
-    // Email sending - via FormSubmit on the server side
-    try {
-      const to = process.env.CONTACT_TO_EMAIL || 'keflatet@gmail.com';
-// 
-      // FormSubmit expects specific field names and format
-      const formSubmitData = {
-        name: `${firstV} ${lastV}`,
-        email: emailV,
-        phone: phoneV,
-        message: `נושא: ${subjectV}\n\n${messageV}`,
-        _subject: subjectV ? `פנייה מהאתר: ${subjectV}` : 'פנייה חדשה מהאתר',
-        _replyto: emailV,
-        _captcha: 'false'
-      };
-
-      console.log('Sending to FormSubmit:', { to, data: formSubmitData });
-// 
-      // FormSubmit AJAX expects form-encoded body (not raw JSON)
-      const formBody = new URLSearchParams();
-      Object.entries(formSubmitData).forEach(([key, value]) => {
-        formBody.append(key, String(value ?? ''));
-      });
-
-      const response = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-        },
-        body: formBody,
-      });
-
-      const responseData = await response.json().catch(() => ({}));
-      console.log('FormSubmit response:', { status: response.status, data: responseData });
-
-      if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || 'FormSubmit email send failed');
-      }
-
-      // Check if FormSubmit returned success
-      if (responseData.success === 'true' || responseData.success === true || response.status === 200) {
-        results.email = true;
-      } else {
-        throw new Error('FormSubmit did not confirm success');
-      }
-    } catch (emailError: any) {
-      console.error('Email sending failed:', emailError);
-      results.errors.push(`שליחת אימייל נכשלה: ${emailError.message}`);
-    }
+    // Email is now sent client-side via FormSubmit (skipEmail=true when called from client)
+    // Server-side email sending is disabled because FormSubmit doesn't work from server
 
     // WhatsApp sending
     try {
